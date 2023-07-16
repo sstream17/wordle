@@ -220,10 +220,10 @@
         app:layout_constraintTop_toBottomOf="@+id/second_keyboard_row">
 
         <Button
-            android:id="@+id/enter_button"
+            android:id="@+id/delete_button"
             style="@style/button_letters"
             android:layout_width="80dp"
-            android:text="Enter" />
+            android:text="Del" />
 
         <Button
             android:id="@+id/Z"
@@ -262,13 +262,11 @@
             style="@style/button_letters"
             android:text="M" />
 
-
         <Button
-            android:id="@+id/delete_button"
+            android:id="@+id/enter_button"
             style="@style/button_letters"
             android:layout_width="80dp"
-            android:text="Del" />
-
+            android:text="Enter" />
 
     </LinearLayout>
 
