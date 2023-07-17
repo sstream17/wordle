@@ -1,24 +1,20 @@
 package com.example.wordle
 
 import android.app.AlertDialog
-import android.content.DialogInterface
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.TextView
-import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.fragment.findNavController
 import com.example.wordle.database.StatisticDatabase
 import com.example.wordle.database.StatisticEntity
-import com.example.wordle.database.StatisticsDao
 import com.example.wordle.databinding.FragmentGameScreenBinding
 import com.example.wordle.databinding.StatisticDialogBinding
-import com.example.wordle.util.*
+import com.example.wordle.util.showInfo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
@@ -30,7 +26,7 @@ class GameScreenFragment : Fragment() {
     private var _binding: FragmentGameScreenBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel by viewModels<WordleViewModel>()
+    private val viewModel by activityViewModels<WordleViewModel>()
 
     private lateinit var database: StatisticDatabase
 
@@ -55,60 +51,6 @@ class GameScreenFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-
-        val listOfTextViews = listOf(
-            listOf(
-                binding.firstRow1,
-                binding.firstRow2,
-                binding.firstRow3,
-                binding.firstRow4,
-                binding.firstRow5
-            ),
-            listOf(
-                binding.secondRow1,
-                binding.secondRow2,
-                binding.secondRow3,
-                binding.secondRow4,
-                binding.secondRow5
-            ),
-            listOf(
-                binding.thirdRow1,
-                binding.thirdRow2,
-                binding.thirdRow3,
-                binding.thirdRow4,
-                binding.thirdRow5
-            ),
-            listOf(
-                binding.fourthRow1,
-                binding.fourthRow2,
-                binding.fourthRow3,
-                binding.fourthRow4,
-                binding.fourthRow5
-            ),
-            listOf(
-                binding.fifthRow1,
-                binding.fifthRow2,
-                binding.fifthRow3,
-                binding.fifthRow4,
-                binding.fifthRow5
-            ),
-            listOf(
-                binding.sixthRow1,
-                binding.sixthRow2,
-                binding.sixthRow3,
-                binding.sixthRow4,
-                binding.sixthRow5
-            )
-        )
-
-        val lettersRow = listOf(
-            binding.firstLettersRow,
-            binding.secondLettersRow,
-            binding.thirdLettersRow,
-            binding.fourthLettersRow,
-            binding.fifthLettersRow,
-            binding.sixthLettersRow
-        )
         val keyboardMap = mapOf<String, Button>(
             "A" to binding.A,
             "B" to binding.B,
@@ -138,8 +80,6 @@ class GameScreenFragment : Fragment() {
             "Z" to binding.Z,
         )
 
-        var shakeAnimation = shakeAnimation(lettersRow[viewModel.currentPosition.row])
-
         keyboardMap.forEach { (letter, button) ->
             lifecycleScope.launch {
                 viewModel.listOfKeys[letter]!!.collect { key ->
@@ -151,23 +91,6 @@ class GameScreenFragment : Fragment() {
             }
             button.setOnClickListener {
                 viewModel.setLetter(letter)
-            }
-        }
-
-        listOfTextViews.forEachIndexed { rows, list ->
-            list.forEachIndexed { cols, textView ->
-                lifecycleScope.launch {
-                    viewModel.listOfTextViews[rows][cols].collect { s ->
-                        if (s.letter != " " && s.backgroundColor == R.color.white) {
-                            slightlyScaleUpAnimation(textView)
-                        }
-                        textView.apply {
-                            text = s.letter
-                            background = resources.getDrawable(s.backgroundColor)
-                            setTextColor(resources.getColor(s.textColor))
-                        }
-                    }
-                }
             }
         }
 
@@ -184,7 +107,6 @@ class GameScreenFragment : Fragment() {
 
         val inflater = requireActivity().layoutInflater
 
-
         val binderDialog = StatisticDialogBinding.inflate(inflater)
         val builder =
             AlertDialog.Builder(requireContext()).apply {
@@ -200,23 +122,11 @@ class GameScreenFragment : Fragment() {
                 when (it) {
                     Signal.NOTAWORD -> {
                         showInfo(binding.info, "Not in word list")
-                        shakeAnimation()
                     }
                     Signal.NEEDLETTER -> {
                         showInfo(binding.info, "Not enough letters")
-                        shakeAnimation()
                     }
-                    Signal.NEXTTRY -> {
-                        flip(
-                            listOfTextViews[viewModel.currentPosition.row],
-                            viewModel.checkColor(),
-                        ) {
-                            viewModel.emitColor()
-                            viewModel.currentPosition.nextRow()
-                            shakeAnimation =
-                                shakeAnimation(lettersRow[viewModel.currentPosition.row])
-                        }
-                    }
+                    Signal.NEXTTRY -> Unit
                     Signal.GAMEOVER -> {
                         CoroutineScope(Dispatchers.Default).launch {
                             val currentStat = database.statisticDao().getStat()
@@ -226,20 +136,9 @@ class GameScreenFragment : Fragment() {
                         }
                         showInfo(binding.info, viewModel.wordle)
 
-                        flip(
-                            listOfTextViews[viewModel.currentPosition.row],
-                            viewModel.checkColor(),
-                        ) {
-                            builder.show()
-                            viewModel.emitColor()
-                            viewModel.resetGame()
-                            shakeAnimation =
-                                shakeAnimation(lettersRow[viewModel.currentPosition.row])
-                        }
                     }
                     Signal.WIN -> {
                         val pos = viewModel.currentPosition.row
-                        val tws = listOfTextViews[pos]
 
                         when (pos) {
                             0 -> showInfo(binding.info, "Genius")
@@ -256,43 +155,17 @@ class GameScreenFragment : Fragment() {
                             bindDialog(binderDialog, currentStat)
                             database.statisticDao().update(currentStat)
                         }
-                        flip(
-                            tws,
-                            viewModel.checkColor(),
-                        ) {
-                            winAnimator(tws){
-
-                                viewModel.emitColor()
-                                viewModel.resetGame()
-                                builder.show()
-                                shakeAnimation =
-                                    shakeAnimation(lettersRow[viewModel.currentPosition.row])
-                            }.start()
-                        }
+                        builder.show()
                     }
                 }
             }
         }
     }
 
-    private fun flip(
-        listOfTextViews: List<TextView>,
-        letters: List<Letter>,
-        reset: Boolean = false,
-        doOnEnd: () -> Unit
-    ) {
-        flipListOfTextViews(
-            listOfTextViews,
-            letters,
-            reset = reset
-        ) {
-            doOnEnd()
-        }.start()
-    }
-
     private fun bindDialog(binding: StatisticDialogBinding, stats: StatisticEntity) {
         binding.apply {
-            var totalWin = (stats.first + stats.second + stats.third + stats.fourth + stats.fifth + stats.sixth)
+            var totalWin =
+                (stats.first + stats.second + stats.third + stats.fourth + stats.fifth + stats.sixth)
             totalWin = if (totalWin == 0) 1 else totalWin
 
             played.text = stats.played.toString()
@@ -327,7 +200,8 @@ class GameScreenFragment : Fragment() {
     }
 
     fun winRatio(stats: StatisticEntity): Int {
-        val totalWin = (stats.first + stats.second + stats.third + stats.fourth + stats.fifth + stats.sixth)
+        val totalWin =
+            (stats.first + stats.second + stats.third + stats.fourth + stats.fifth + stats.sixth)
         val ratio = totalWin.toFloat() / stats.played
         return (ratio * 100).toInt()
     }

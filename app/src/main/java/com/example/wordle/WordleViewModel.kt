@@ -5,8 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.example.wordle.data.WORD_LENGTH
 import com.example.wordle.data.wordList
 import com.example.wordle.data.wordListSize
-import com.example.wordle.database.StatisticDatabase
-import com.example.wordle.databinding.FragmentGameScreenBinding
 import com.example.wordle.util.listToWord
 import com.example.wordle.util.wordlistBinarySearch
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -14,23 +12,24 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import java.util.*
 
-const val EMPTY_STRING = ""
-const val NUMBER_OF_ROWS = 6
+const val NUMBER_OF_TRIES = 5
 val DEFAULT_LETTER = Letter(" ", R.drawable.border, R.color.black)
 const val ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-const val ALPHABET_LENGTH = 26
 val DEFAULT_KEY = Key(backgroundColor = R.color.gray, textColor = R.color.black)
 
-class WordleViewModel() : ViewModel() {
+class WordleViewModel(numberOfGames: Int = 1) : ViewModel() {
 
     val signal = MutableSharedFlow<Signal>()
 
     var r = Random(System.nanoTime()).nextInt(wordListSize)
     private val wordSlice get() = r * WORD_LENGTH
 
+    val numberOfRows = numberOfGames + NUMBER_OF_TRIES
+
     val wordle get() = wordList.slice(wordSlice until wordSlice + WORD_LENGTH)
+
     val listOfTextViews =
-        List(NUMBER_OF_ROWS) { List(WORD_LENGTH) { MutableStateFlow(Letter(" ")) } }
+        List(numberOfRows) { List(WORD_LENGTH) { MutableStateFlow(Letter(" ")) } }
 
     val listOfKeys = mutableMapOf<String, MutableStateFlow<Key>>().apply {
         ALPHABET.forEach { letter ->
