@@ -1,5 +1,6 @@
 package com.example.wordle
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.wordle.data.WORD_LENGTH
@@ -17,16 +18,17 @@ val DEFAULT_LETTER = Letter(" ", R.drawable.border, R.color.black)
 const val ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 val DEFAULT_KEY = Key(backgroundColor = R.color.gray, textColor = R.color.black)
 
-class WordleViewModel(numberOfGames: Int = 1) : ViewModel() {
+class WordleViewModel() : ViewModel() {
 
     val signal = MutableSharedFlow<Signal>()
 
     var r = Random(System.nanoTime()).nextInt(wordListSize)
     private val wordSlice get() = r * WORD_LENGTH
 
+    val numberOfGames = 1
     val numberOfRows = numberOfGames + NUMBER_OF_TRIES
 
-    val wordle get() = wordList.slice(wordSlice until wordSlice + WORD_LENGTH)
+    val answers get() = List(numberOfGames) { wordList.slice(wordSlice until wordSlice + WORD_LENGTH) }
 
     val listOfTextViews =
         List(numberOfRows) { List(WORD_LENGTH) { MutableStateFlow(Letter(" ")) } }
@@ -75,17 +77,24 @@ class WordleViewModel(numberOfGames: Int = 1) : ViewModel() {
 
     var guess: String = ""
 
-    suspend fun checkRow() {
+    suspend fun checkRows() {
         guess =
             listToWord(listOfTextViews[currentPosition.row].filter { it.value.letter != " " }
                 .map { it.value.letter }).lowercase(
                 Locale.getDefault()
             )
+
+        for (i in 0 until numberOfGames) {
+            checkRow(i)
+        }
+    }
+
+    private suspend fun checkRow(index: Int) {
         when {
             guess.length < 5 -> {
                 signal.emit(Signal.NEEDLETTER)
             }
-            wordle == guess -> {
+            answers[index] == guess -> {
                 signal.emit(Signal.WIN)
             }
             wordlistBinarySearch(wordList, guess, 0, wordListSize, WORD_LENGTH) -> {
@@ -101,14 +110,14 @@ class WordleViewModel(numberOfGames: Int = 1) : ViewModel() {
         }
     }
 
-    fun checkColor(): List<Letter> {
+    fun checkColor(answerIndex: Int = 0): List<Letter> {
         val list = mutableListOf<Letter>()
         listOfTextViews[currentPosition.row].forEachIndexed { index, flow ->
             list.add(when (guess[index]) {
-                wordle[index] -> {
+                answers[answerIndex][index] -> {
                     Letter(flow.value.letter, R.color.green, R.color.white)
                 }
-                in wordle.filterIndexed { i, s -> guess[i] != s } -> {
+                in answers[answerIndex].filterIndexed { i, s -> guess[i] != s } -> {
                     Letter(flow.value.letter, R.color.yellow, R.color.white)
                 }
                 else -> {

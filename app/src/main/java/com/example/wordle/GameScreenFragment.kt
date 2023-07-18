@@ -2,7 +2,6 @@ package com.example.wordle
 
 import android.app.AlertDialog
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -100,7 +99,7 @@ class GameScreenFragment : Fragment() {
 
         binding.enterButton.setOnClickListener {
             lifecycleScope.launch {
-                viewModel.checkRow()
+                viewModel.checkRows()
             }
         }
 
@@ -134,7 +133,7 @@ class GameScreenFragment : Fragment() {
                             bindDialog(binderDialog, currentStat)
                             database.statisticDao().update(currentStat)
                         }
-                        showInfo(binding.info, viewModel.wordle)
+                        showInfo(binding.info, viewModel.answers[0])
 
                     }
                     Signal.WIN -> {
