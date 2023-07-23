@@ -1,6 +1,5 @@
 package com.example.wordle
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.wordle.data.WORD_LENGTH
@@ -31,7 +30,7 @@ class WordleViewModel() : ViewModel() {
     val answers get() = List(numberOfGames) { wordList.slice(wordSlice until wordSlice + WORD_LENGTH) }
 
     val listOfTextViews =
-        List(numberOfRows) { List(WORD_LENGTH) { MutableStateFlow(Letter(" ")) } }
+        List(numberOfGames) { List(numberOfRows) { List(WORD_LENGTH) { MutableStateFlow(Letter(" ")) } } }
 
     val listOfKeys = mutableMapOf<String, MutableStateFlow<Key>>().apply {
         ALPHABET.forEach { letter ->
@@ -49,7 +48,11 @@ class WordleViewModel() : ViewModel() {
     fun setLetter(letter: String) {
         if (currentPosition.col < WORD_LENGTH) {
             viewModelScope.launch {
-                listOfTextViews[currentPosition.row][currentPosition.col].emit(Letter(letter))
+                listOfTextViews.forEach { board ->
+                    board[currentPosition.row][currentPosition.col].emit(
+                        Letter(letter)
+                    )
+                }
             }
             currentPosition.nextColumn()
         }
@@ -59,7 +62,11 @@ class WordleViewModel() : ViewModel() {
         if (currentPosition.col > 0) {
             currentPosition.previousColumn()
             viewModelScope.launch {
-                listOfTextViews[currentPosition.row][currentPosition.col].emit(Letter(" "))
+                listOfTextViews.forEach { board ->
+                    board[currentPosition.row][currentPosition.col].emit(
+                        Letter(" ")
+                    )
+                }
             }
         }
     }
@@ -79,7 +86,7 @@ class WordleViewModel() : ViewModel() {
 
     suspend fun checkRows() {
         guess =
-            listToWord(listOfTextViews[currentPosition.row].filter { it.value.letter != " " }
+            listToWord(listOfTextViews[0][currentPosition.row].filter { it.value.letter != " " }
                 .map { it.value.letter }).lowercase(
                 Locale.getDefault()
             )
@@ -112,38 +119,42 @@ class WordleViewModel() : ViewModel() {
 
     fun checkColor(answerIndex: Int = 0): List<Letter> {
         val list = mutableListOf<Letter>()
-        listOfTextViews[currentPosition.row].forEachIndexed { index, flow ->
-            list.add(when (guess[index]) {
-                answers[answerIndex][index] -> {
-                    Letter(flow.value.letter, R.color.green, R.color.white)
-                }
-                in answers[answerIndex].filterIndexed { i, s -> guess[i] != s } -> {
-                    Letter(flow.value.letter, R.color.yellow, R.color.white)
-                }
-                else -> {
-                    Letter(flow.value.letter, R.color.dark_gray, R.color.white)
-                }
-            })
+        listOfTextViews.forEach { board ->
+            board[currentPosition.row].forEachIndexed { index, flow ->
+                list.add(when (guess[index]) {
+                    answers[answerIndex][index] -> {
+                        Letter(flow.value.letter, R.color.green, R.color.white)
+                    }
+                    in answers[answerIndex].filterIndexed { i, s -> guess[i] != s } -> {
+                        Letter(flow.value.letter, R.color.yellow, R.color.white)
+                    }
+                    else -> {
+                        Letter(flow.value.letter, R.color.dark_gray, R.color.white)
+                    }
+                })
+            }
         }
         return list
     }
 
     fun emitColor(list: List<Letter> = checkColor()) {
         viewModelScope.launch {
-            listOfTextViews[currentPosition.row].forEachIndexed { index, flow ->
-                val letter = list[index]
-                flow.emit(letter)
-                letterTrash.push(flow)
+            listOfTextViews.forEach { board ->
+                board[currentPosition.row].forEachIndexed { index, flow ->
+                    val letter = list[index]
+                    flow.emit(letter)
+                    letterTrash.push(flow)
 
-                val key = listOfKeys[letter.letter]!!
-                val bg = when (key.value.backgroundColor) {
-                    R.color.green -> R.color.green
-                    R.color.yellow -> if (letter.backgroundColor == R.color.green) R.color.green else R.color.yellow
-                    else -> letter.backgroundColor
+                    val key = listOfKeys[letter.letter]!!
+                    val bg = when (key.value.backgroundColor) {
+                        R.color.green -> R.color.green
+                        R.color.yellow -> if (letter.backgroundColor == R.color.green) R.color.green else R.color.yellow
+                        else -> letter.backgroundColor
+                    }
+
+                    key.emit(Key(bg, letter.textColor))
+                    keyTrash.push(key)
                 }
-
-                key.emit(Key(bg, letter.textColor))
-                keyTrash.push(key)
             }
         }
     }

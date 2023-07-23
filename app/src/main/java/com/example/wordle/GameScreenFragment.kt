@@ -1,19 +1,25 @@
 package com.example.wordle
 
 import android.app.AlertDialog
+import android.content.DialogInterface
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.GridLayoutManager
 import com.example.wordle.database.StatisticDatabase
 import com.example.wordle.database.StatisticEntity
+import com.example.wordle.database.StatisticsDao
 import com.example.wordle.databinding.FragmentGameScreenBinding
 import com.example.wordle.databinding.StatisticDialogBinding
-import com.example.wordle.util.showInfo
+import com.example.wordle.util.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
@@ -25,7 +31,7 @@ class GameScreenFragment : Fragment() {
     private var _binding: FragmentGameScreenBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel by activityViewModels<WordleViewModel>()
+    private val viewModel by viewModels<WordleViewModel>()
 
     private lateinit var database: StatisticDatabase
 
@@ -50,6 +56,16 @@ class GameScreenFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        val boardsRecyclerView = binding.gameBoard
+        val adapter = GuessBoardAdapter(viewModel.listOfTextViews)
+        val numberOfColumns = when {
+            viewModel.numberOfGames > 1 -> 2
+            else -> 1
+        }
+        val layoutManager = GridLayoutManager(context, numberOfColumns)
+        boardsRecyclerView.adapter = adapter
+        boardsRecyclerView.layoutManager = layoutManager
+
         val keyboardMap = mapOf<String, Button>(
             "A" to binding.A,
             "B" to binding.B,
@@ -106,6 +122,7 @@ class GameScreenFragment : Fragment() {
 
         val inflater = requireActivity().layoutInflater
 
+
         val binderDialog = StatisticDialogBinding.inflate(inflater)
         val builder =
             AlertDialog.Builder(requireContext()).apply {
@@ -125,7 +142,10 @@ class GameScreenFragment : Fragment() {
                     Signal.NEEDLETTER -> {
                         showInfo(binding.info, "Not enough letters")
                     }
-                    Signal.NEXTTRY -> Unit
+                    Signal.NEXTTRY -> {
+                        viewModel.emitColor()
+                        viewModel.currentPosition.nextRow()
+                    }
                     Signal.GAMEOVER -> {
                         CoroutineScope(Dispatchers.Default).launch {
                             val currentStat = database.statisticDao().getStat()
@@ -135,6 +155,9 @@ class GameScreenFragment : Fragment() {
                         }
                         showInfo(binding.info, viewModel.answers[0])
 
+                        builder.show()
+                        viewModel.emitColor()
+                        viewModel.resetGame()
                     }
                     Signal.WIN -> {
                         val pos = viewModel.currentPosition.row
@@ -154,11 +177,29 @@ class GameScreenFragment : Fragment() {
                             bindDialog(binderDialog, currentStat)
                             database.statisticDao().update(currentStat)
                         }
+
+                        viewModel.emitColor()
+                        viewModel.resetGame()
                         builder.show()
                     }
                 }
             }
         }
+    }
+
+    private fun flip(
+        listOfTextViews: List<TextView>,
+        letters: List<Letter>,
+        reset: Boolean = false,
+        doOnEnd: () -> Unit
+    ) {
+        flipListOfTextViews(
+            listOfTextViews,
+            letters,
+            reset = reset
+        ) {
+            doOnEnd()
+        }.start()
     }
 
     private fun bindDialog(binding: StatisticDialogBinding, stats: StatisticEntity) {

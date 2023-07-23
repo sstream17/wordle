@@ -35,24 +35,24 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/info" />
 
-    <androidx.fragment.app.FragmentContainerView
+    <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/game_board"
-        android:name="com.example.wordle.GameBoardFragment"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
+        app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
+        app:layout_constraintBottom_toTopOf="@+id/first_keyboard_row"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/wordle"
-        app:layout_constraintBottom_toTopOf="@+id/first_keyboard_row"/>
+        app:layout_constraintTop_toBottomOf="@+id/wordle" />
 
 
     <LinearLayout
         android:id="@+id/third_row_keyboard"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/second_keyboard_row">
+        app:layout_constraintStart_toStartOf="parent">
 
         <Button
             android:id="@+id/delete_button"
@@ -110,9 +110,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:weightSum="10"
+        app:layout_constraintBottom_toTopOf="@+id/second_keyboard_row"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/game_board">
+        app:layout_constraintStart_toStartOf="parent">
 
         <Button
             android:id="@+id/Q"
@@ -172,9 +172,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:weightSum="10"
+        app:layout_constraintBottom_toTopOf="@+id/third_row_keyboard"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/first_keyboard_row">
+        app:layout_constraintStart_toStartOf="parent">
 
         <Button
             android:id="@+id/A"

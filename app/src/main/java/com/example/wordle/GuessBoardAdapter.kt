@@ -1,47 +1,39 @@
 package com.example.wordle
 
-import android.os.Bundle
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.lifecycleScope
-import com.example.wordle.databinding.FragmentGameBoardBinding
+import androidx.recyclerview.widget.RecyclerView
+import com.example.wordle.databinding.GuessBoardItemBinding
 import com.example.wordle.util.flipListOfTextViews
-import com.example.wordle.util.shakeAnimation
 import com.example.wordle.util.slightlyScaleUpAnimation
-import com.example.wordle.util.winAnimator
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
+class GuessBoardAdapter(private val dataSet: List<List<List<MutableStateFlow<Letter>>>>) :
+    RecyclerView.Adapter<GuessBoardAdapter.ViewHolder>() {
 
-/**
- * A simple [Fragment] subclass.
- * Use the [GameBoardFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
-class GameBoardFragment : Fragment() {
-
-    private var _binding: FragmentGameBoardBinding? = null
+    private var _binding: GuessBoardItemBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel by activityViewModels<WordleViewModel>()
+    /**
+     * Provide a reference to the type of views that you are using
+     * (custom ViewHolder)
+     */
+    class ViewHolder(viewHolderBinding: GuessBoardItemBinding) : RecyclerView.ViewHolder(viewHolderBinding.root)
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        _binding = FragmentGameBoardBinding.inflate(inflater, container, false)
-        return binding.root
+    // Create new views (invoked by the layout manager)
+    override fun onCreateViewHolder(viewGroup: ViewGroup, viewType: Int): ViewHolder {
+        // Create a new view, which defines the UI of the list item
+        _binding = GuessBoardItemBinding.inflate(LayoutInflater.from(viewGroup.context), viewGroup, false)
+
+        return ViewHolder(binding)
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    // Replace the contents of a view (invoked by the layout manager)
+    override fun onBindViewHolder(viewHolder: ViewHolder, position: Int) {
         val listOfTextViews = listOf(
             listOf(
                 binding.firstRow1,
@@ -96,10 +88,10 @@ class GameBoardFragment : Fragment() {
             binding.sixthLettersRow
         )
 
-        /*listOfTextViews.forEachIndexed { rows, list ->
+        listOfTextViews.forEachIndexed { rows, list ->
             list.forEachIndexed { cols, textView ->
-                lifecycleScope.launch {
-                    viewModel.listOfTextViews[rows][cols].collect { s ->
+                GlobalScope.launch {
+                    dataSet[position][rows][cols].collect { s ->
                         if (s.letter != " " && s.backgroundColor == R.color.white) {
                             slightlyScaleUpAnimation(textView)
                         }
@@ -111,11 +103,11 @@ class GameBoardFragment : Fragment() {
                     }
                 }
             }
-        }*/
+        }
 
-        var shakeAnimation = shakeAnimation(lettersRow[viewModel.currentPosition.row])
+        /*var shakeAnimation = shakeAnimation(lettersRow[viewModel.currentPosition.row])
 
-        lifecycleScope.launch {
+        GlobalScope.launch {
             viewModel.signal.collect {
                 when (it) {
                     Signal.NOTAWORD -> {
@@ -164,7 +156,7 @@ class GameBoardFragment : Fragment() {
                     }
                 }
             }
-        }
+        }*/
     }
 
     private fun flip(
@@ -182,8 +174,7 @@ class GameBoardFragment : Fragment() {
         }.start()
     }
 
-    override fun onDestroy() {
-        _binding = null
-        super.onDestroy()
-    }
+    // Return the size of your dataset (invoked by the layout manager)
+    override fun getItemCount() = dataSet.size
+
 }
