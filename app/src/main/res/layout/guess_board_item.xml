@@ -3,11 +3,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:layout_margin="2dp">
 
     <LinearLayout
         android:id="@+id/first_letters_row"
         style="@style/letter_rows"
+        android:layout_width="match_parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -38,6 +40,7 @@
     <LinearLayout
         android:id="@+id/second_letters_row"
         style="@style/letter_rows"
+        android:layout_width="match_parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/first_letters_row">
@@ -67,6 +70,7 @@
     <LinearLayout
         android:id="@+id/third_letters_row"
         style="@style/letter_rows"
+        android:layout_width="match_parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/second_letters_row">
@@ -96,6 +100,7 @@
     <LinearLayout
         android:id="@+id/fourth_letters_row"
         style="@style/letter_rows"
+        android:layout_width="match_parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/third_letters_row">
@@ -125,6 +130,7 @@
     <LinearLayout
         android:id="@+id/fifth_letters_row"
         style="@style/letter_rows"
+        android:layout_width="match_parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/fourth_letters_row">
@@ -154,6 +160,7 @@
     <LinearLayout
         android:id="@+id/sixth_letters_row"
         style="@style/letter_rows"
+        android:layout_width="match_parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/fifth_letters_row">
