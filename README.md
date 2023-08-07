@@ -1,3 +1,5 @@
+This fork is being abandoned for a new Compose implementation
+
 # Wordle for Android 
 Wordle clone for android
 
